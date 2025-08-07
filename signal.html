@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신호등 타이머</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .setup-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .time-display {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .current-time {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .next-signals {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .signal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .signal-item:last-child {
+            border-bottom: none;
+        }
+        
+        .signal-label {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .signal-time {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffeb3b;
+        }
+        
+        .countdown {
+            font-size: 14px;
+            color: #e0e0e0;
+            margin-top: 4px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=24510"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🚦 신호등 타이머</h1>
+        
+        <div class="setup-section">
+            <div class="input-group">
+                <label for="baseTime">기준 신호 시간 (예: 07:19:15)</label>
+                <input type="time" id="baseTime" step="1" value="07:19:15">
+            </div>
+            
+            <div class="input-group">
+                <label for="cycleMinutes">신호 주기 (분)</label>
+                <input type="number" id="cycleMinutes" value="2" min="1" max="10">
+            </div>
+            
+            <div class="input-group">
+                <label for="cycleSeconds">신호 주기 (초)</label>
+                <input type="number" id="cycleSeconds" value="40" min="0" max="59">
+            </div>
+            
+            <button onclick="startTimer()">타이머 시작</button>
+        </div>
+        
+        <div id="timerDisplay" class="hidden">
+            <div class="time-display">
+                <div class="current-time" id="currentTime"></div>
+                
+                <div class="next-signals">
+                    <div class="signal-item">
+                        <div class="signal-label">다음 신호</div>
+                        <div>
+                            <div class="signal-time" id="nextSignal"></div>
+                            <div class="countdown" id="nextCountdown"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="signal-item">
+                        <div class="signal-label">다다음 신호</div>
+                        <div>
+                            <div class="signal-time" id="nextNextSignal"></div>
+                            <div class="countdown" id="nextNextCountdown"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="resetTimer()">설정 변경</button>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let baseTime;
+        let cycleSeconds;
+
+        function startTimer() {
+            const baseTimeInput = document.getElementById('baseTime').value;
+            const cycleMinutes = parseInt(document.getElementById('cycleMinutes').value);
+            const cycleSecs = parseInt(document.getElementById('cycleSeconds').value);
+            
+            if (!baseTimeInput) {
+                alert('기준 시간을 입력해주세요!');
+                return;
+            }
+            
+            // 기준 시간을 오늘 날짜로 변환
+            const today = new Date();
+            const [hours, minutes, seconds] = baseTimeInput.split(':').map(Number);
+            baseTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, seconds);
+            
+            cycleSeconds = cycleMinutes * 60 + cycleSecs;
+            
+            document.querySelector('.setup-section').classList.add('hidden');
+            document.getElementById('timerDisplay').classList.remove('hidden');
+            
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        function updateTimer() {
+            const now = new Date();
+            
+            // 현재 시간 표시
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('ko-KR', { hour12: false });
+            
+            // 기준 시간으로부터 경과된 시간 계산
+            const elapsed = Math.floor((now - baseTime) / 1000);
+            
+            // 다음 신호까지의 시간 계산
+            const currentCycle = Math.floor(elapsed / cycleSeconds);
+            const nextSignalTime = new Date(baseTime.getTime() + (currentCycle + 1) * cycleSeconds * 1000);
+            const nextNextSignalTime = new Date(baseTime.getTime() + (currentCycle + 2) * cycleSeconds * 1000);
+            
+            // 다음 신호 시간 표시
+            document.getElementById('nextSignal').textContent = 
+                nextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
+            document.getElementById('nextNextSignal').textContent = 
+                nextNextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
+            
+            // 카운트다운 계산
+            const timeToNext = Math.floor((nextSignalTime - now) / 1000);
+            const timeToNextNext = Math.floor((nextNextSignalTime - now) / 1000);
+            
+            document.getElementById('nextCountdown').textContent = 
+                `${Math.floor(timeToNext / 60)}분 ${timeToNext % 60}초 후`;
+            document.getElementById('nextNextCountdown').textContent = 
+                `${Math.floor(timeToNextNext / 60)}분 ${timeToNextNext % 60}초 후`;
+        }
+        
+        function resetTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            document.querySelector('.setup-section').classList.remove('hidden');
+            document.getElementById('timerDisplay').classList.add('hidden');
+        }
+        
+        // 페이지 숨김/표시 시 타이머 제어
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+            } else {
+                if (!document.querySelector('.setup-section').classList.contains('hidden')) {
+                    updateTimer();
+                    timerInterval = setInterval(updateTimer, 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
