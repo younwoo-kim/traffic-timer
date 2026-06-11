@@ -122,7 +122,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 14px 0;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
 
@@ -135,17 +135,21 @@
       font-size: 16px;
     }
 
-    .signal-time {
+    /* 남은시간: 크게 표시 */
+    .signal-countdown-main {
       font-size: 20px;
       font-weight: 800;
       color: #ffeb3b;
       text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      text-align: right;
     }
 
-    .countdown {
+    /* 실제 신호 시각: 작게 표시 */
+    .signal-time-sub {
       font-size: 14px;
       color: #f0f0f0;
       margin-top: 4px;
+      text-align: right;
     }
 
     .hidden { display: none; }
@@ -203,16 +207,16 @@
           <div class="signal-item">
             <div class="signal-label">다음 신호</div>
             <div>
-              <div class="signal-time" id="nextSignal"></div>
-              <div class="countdown" id="nextCountdown"></div>
+              <div class="signal-countdown-main" id="nextCountdown"></div>
+              <div class="signal-time-sub" id="nextSignal"></div>
             </div>
           </div>
 
           <div class="signal-item">
             <div class="signal-label">다다음 신호</div>
             <div>
-              <div class="signal-time" id="nextNextSignal"></div>
-              <div class="countdown" id="nextNextCountdown"></div>
+              <div class="signal-countdown-main" id="nextNextCountdown"></div>
+              <div class="signal-time-sub" id="nextNextSignal"></div>
             </div>
           </div>
         </div>
@@ -252,7 +256,7 @@
       },
       3: {
         title: '3번째 신호등',
-        offset: 18,
+        offset: 54,
         bodyClass: 'mode-3'
       }
     };
@@ -361,6 +365,13 @@
       isRunning = false;
     }
 
+    function formatRemainTime(totalSeconds) {
+      const safeSeconds = Math.max(0, totalSeconds);
+      const minutes = Math.floor(safeSeconds / 60);
+      const seconds = safeSeconds % 60;
+      return `${minutes}분 ${seconds}초 후`;
+    }
+
     function updateTimer() {
       if (!baseTime || cycleSeconds <= 0) return;
 
@@ -369,15 +380,6 @@
       document.getElementById('currentTime').textContent =
         now.toLocaleTimeString('ko-KR', { hour12: false });
 
-      /*
-        핵심 수정:
-        오프셋을 단순히 표시 시간에만 더하지 않고,
-        기준 신호 시간 자체를 offset만큼 이동시킨 뒤
-        그 기준으로 다음 사이클을 계산함.
-
-        그래서 2번째 신호등(+9초)이
-        8~9초 남기고 조기 리셋되는 문제가 사라짐.
-      */
       const adjustedBaseTime = new Date(baseTime.getTime() + offsetSeconds * 1000);
 
       let elapsed = Math.floor((now - adjustedBaseTime) / 1000);
@@ -397,20 +399,20 @@
         adjustedBaseTime.getTime() + (nextCycleIndex + 1) * cycleSeconds * 1000
       );
 
+      const timeToNext = Math.ceil((nextSignalTime - now) / 1000);
+      const timeToNextNext = Math.ceil((nextNextSignalTime - now) / 1000);
+
+      document.getElementById('nextCountdown').textContent =
+        formatRemainTime(timeToNext);
+
+      document.getElementById('nextNextCountdown').textContent =
+        formatRemainTime(timeToNextNext);
+
       document.getElementById('nextSignal').textContent =
         nextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
 
       document.getElementById('nextNextSignal').textContent =
         nextNextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
-
-      const timeToNext = Math.ceil((nextSignalTime - now) / 1000);
-      const timeToNextNext = Math.ceil((nextNextSignalTime - now) / 1000);
-
-      document.getElementById('nextCountdown').textContent =
-        `${Math.max(0, Math.floor(timeToNext / 60))}분 ${Math.max(0, timeToNext % 60)}초 후`;
-
-      document.getElementById('nextNextCountdown').textContent =
-        `${Math.max(0, Math.floor(timeToNextNext / 60))}분 ${Math.max(0, timeToNextNext % 60)}초 후`;
     }
   </script>
 </body>
