@@ -4,8 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>신호등 타이머</title>
+
+  <script>
+    // ==================================================
+    // 사용자 수정 영역
+    // 나중에 신호 시간이 달라지면 여기 숫자만 바꾸면 됩니다.
+    // ==================================================
+
+    // 1번째 신호등 기준 시각
+    const BASE_TIME = "07:00:35";
+
+    // 신호 주기: 160초 = 2분 40초
+    const CYCLE_SECONDS = 160;
+
+    // 각 신호등 오프셋
+    const SIGNAL_1_OFFSET = 0;
+    const SIGNAL_2_OFFSET = 15;
+    const SIGNAL_3_OFFSET = 52;
+
+    // ==================================================
+  </script>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -17,14 +42,17 @@
 
     body.mode-1 {
       background: linear-gradient(135deg, #b31217 0%, #5f0a87 100%);
+      --countdown-color: #ffeb3b;
     }
 
     body.mode-2 {
       background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+      --countdown-color: #3b2500;
     }
 
     body.mode-3 {
       background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+      --countdown-color: #ffeb3b;
     }
 
     .container {
@@ -42,73 +70,29 @@
       margin-bottom: 10px;
       font-size: 28px;
       font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
 
     .mode-title {
       text-align: center;
       font-size: 18px;
       font-weight: 700;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
       color: #fff;
-    }
-
-    .setup-section { margin-bottom: 30px; }
-
-    .input-group { margin-bottom: 20px; }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.9);
-      color: #333;
-      font-size: 16px;
-      outline: none;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.22);
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-
-    button:hover {
-      background: rgba(255,255,255,0.34);
-      transform: translateY(-2px);
-    }
-
-    button.active {
-      background: rgba(255, 255, 255, 0.55);
-      border-color: rgba(255, 255, 255, 0.9);
-      color: #222;
-      box-shadow: 0 0 18px rgba(255,255,255,0.45);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
 
     .time-display {
       text-align: center;
-      margin: 30px 0;
+      margin: 20px 0 30px;
     }
 
     .current-time {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       margin-bottom: 20px;
       color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
 
     .next-signals {
@@ -122,8 +106,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
+      gap: 16px;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.22);
     }
 
     .signal-item:last-child {
@@ -131,32 +116,32 @@
     }
 
     .signal-label {
-      font-weight: 700;
-      font-size: 16px;
-    }
-
-    /* 남은시간: 크게 표시 */
-    .signal-countdown-main {
-      font-size: 20px;
       font-weight: 800;
-      color: #ffeb3b;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
-      text-align: right;
+      font-size: 16px;
+      text-align: left;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
-    /* 실제 신호 시각: 작게 표시 */
+    .signal-value {
+      text-align: right;
+      min-width: 145px;
+    }
+
+    .signal-countdown-main {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--countdown-color);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      line-height: 1.2;
+    }
+
     .signal-time-sub {
       font-size: 14px;
-      color: #f0f0f0;
-      margin-top: 4px;
-      text-align: right;
-    }
-
-    .hidden { display: none; }
-
-    .row-gap {
-      display: grid;
-      gap: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      margin-top: 5px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
     .mode-buttons {
@@ -166,9 +151,31 @@
       margin-top: 16px;
     }
 
-    .mode-buttons button {
-      font-size: 14px;
-      padding: 11px 6px;
+    button {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.22);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.34);
+      transform: translateY(-2px);
+    }
+
+    button.active {
+      background: rgba(255, 255, 255, 0.62);
+      border-color: rgba(255, 255, 255, 0.95);
+      color: #222;
+      box-shadow: 0 0 18px rgba(255,255,255,0.45);
+      text-shadow: none;
     }
   </style>
 </head>
@@ -178,131 +185,137 @@
     <h1>🚦 신호등 타이머</h1>
     <div class="mode-title" id="modeTitle">1번째 신호등</div>
 
-    <div class="setup-section" id="setupSection">
-      <div class="input-group">
-        <label for="baseTime">기준 신호 시간</label>
-        <input type="time" id="baseTime" step="1" value="07:19:15">
+    <div class="time-display">
+      <div class="current-time">
+        현재 <span id="currentTime">--:--:--</span>
       </div>
 
-      <div class="row-gap">
-        <div class="input-group">
-          <label for="cycleMinutes">신호 주기 (분)</label>
-          <input type="number" id="cycleMinutes" value="2" min="0" max="10">
+      <div class="next-signals">
+        <div class="signal-item">
+          <div class="signal-label">다음 신호</div>
+          <div class="signal-value">
+            <div class="signal-countdown-main" id="nextCountdown">--분 --초 후</div>
+            <div class="signal-time-sub" id="nextSignal">--:--:--</div>
+          </div>
         </div>
 
-        <div class="input-group">
-          <label for="cycleSeconds">신호 주기 (초)</label>
-          <input type="number" id="cycleSeconds" value="40" min="0" max="59">
+        <div class="signal-item">
+          <div class="signal-label">다다음 신호</div>
+          <div class="signal-value">
+            <div class="signal-countdown-main" id="nextNextCountdown">--분 --초 후</div>
+            <div class="signal-time-sub" id="nextNextSignal">--:--:--</div>
+          </div>
         </div>
       </div>
-
-      <button id="btnStart">타이머 시작</button>
     </div>
 
-    <div id="timerDisplay" class="hidden">
-      <div class="time-display">
-        <div class="current-time" id="currentTime"></div>
-
-        <div class="next-signals">
-          <div class="signal-item">
-            <div class="signal-label">다음 신호</div>
-            <div>
-              <div class="signal-countdown-main" id="nextCountdown"></div>
-              <div class="signal-time-sub" id="nextSignal"></div>
-            </div>
-          </div>
-
-          <div class="signal-item">
-            <div class="signal-label">다다음 신호</div>
-            <div>
-              <div class="signal-countdown-main" id="nextNextCountdown"></div>
-              <div class="signal-time-sub" id="nextNextSignal"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="mode-buttons">
-        <button id="btnMode1" class="active">1번째</button>
-        <button id="btnMode2">2번째</button>
-        <button id="btnMode3">3번째</button>
-      </div>
-
-      <div style="margin-top: 16px;">
-        <button id="btnReset">설정 변경</button>
-      </div>
+    <div class="mode-buttons">
+      <button id="btnMode1" class="active">1번째</button>
+      <button id="btnMode2">2번째</button>
+      <button id="btnMode3">3번째</button>
     </div>
   </div>
 
   <script>
     let timerInterval = null;
-    let baseTime;
-    let cycleSeconds = 0;
-    let isRunning = false;
-
+    let baseTime = null;
     let currentMode = 1;
-    let offsetSeconds = 0;
+    let offsetSeconds = SIGNAL_1_OFFSET;
 
     const modeConfig = {
       1: {
         title: '1번째 신호등',
-        offset: 0,
+        offset: SIGNAL_1_OFFSET,
         bodyClass: 'mode-1'
       },
       2: {
         title: '2번째 신호등',
-        offset: 9,
+        offset: SIGNAL_2_OFFSET,
         bodyClass: 'mode-2'
       },
       3: {
         title: '3번째 신호등',
-        offset: 54,
+        offset: SIGNAL_3_OFFSET,
         bodyClass: 'mode-3'
       }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      const baseInput = document.getElementById('baseTime');
-      if (!baseInput.value) baseInput.value = '07:19:15';
+      baseTime = createTodayBaseTime(BASE_TIME);
 
-      const m = document.getElementById('cycleMinutes');
-      const s = document.getElementById('cycleSeconds');
-      if (!m.value) m.value = '2';
-      if (!s.value) s.value = '40';
+      if (!baseTime) return;
 
+      bindButtons();
       applyMode(1);
 
-      setTimeout(() => {
-        startTimer();
-      }, 100);
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
     });
 
-    document.getElementById('btnStart').addEventListener('click', () => {
-      startTimer();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        updateTimer();
+      }
     });
 
-    document.getElementById('btnMode1').addEventListener('click', () => {
-      applyMode(1);
+    window.addEventListener('pageshow', () => {
       updateTimer();
     });
 
-    document.getElementById('btnMode2').addEventListener('click', () => {
-      applyMode(2);
-      updateTimer();
-    });
+    function bindButtons() {
+      document.getElementById('btnMode1').addEventListener('click', () => {
+        applyMode(1);
+        updateTimer();
+      });
 
-    document.getElementById('btnMode3').addEventListener('click', () => {
-      applyMode(3);
-      updateTimer();
-    });
+      document.getElementById('btnMode2').addEventListener('click', () => {
+        applyMode(2);
+        updateTimer();
+      });
 
-    document.getElementById('btnReset').addEventListener('click', () => {
-      stopTimer();
-      applyMode(1);
+      document.getElementById('btnMode3').addEventListener('click', () => {
+        applyMode(3);
+        updateTimer();
+      });
+    }
 
-      document.getElementById('setupSection').classList.remove('hidden');
-      document.getElementById('timerDisplay').classList.add('hidden');
-    });
+    function createTodayBaseTime(timeText) {
+      const parts = timeText.split(':').map(Number);
+
+      if (parts.length < 2 || parts.length > 3 || parts.some(Number.isNaN)) {
+        alert('BASE_TIME 형식이 잘못되었습니다. 예: 07:00:35');
+        return null;
+      }
+
+      const hours = parts[0];
+      const minutes = parts[1];
+      const seconds = parts.length === 3 ? parts[2] : 0;
+
+      if (
+        hours < 0 || hours > 23 ||
+        minutes < 0 || minutes > 59 ||
+        seconds < 0 || seconds > 59
+      ) {
+        alert('BASE_TIME 값이 올바르지 않습니다.');
+        return null;
+      }
+
+      if (!Number.isFinite(CYCLE_SECONDS) || CYCLE_SECONDS <= 0) {
+        alert('CYCLE_SECONDS는 1 이상의 숫자여야 합니다.');
+        return null;
+      }
+
+      const now = new Date();
+
+      return new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        hours,
+        minutes,
+        seconds
+      );
+    }
 
     function applyMode(mode) {
       currentMode = mode;
@@ -318,89 +331,43 @@
       document.getElementById('btnMode3').classList.toggle('active', mode === 3);
     }
 
-    function startTimer() {
-      if (isRunning) return;
-
-      const baseTimeInput = document.getElementById('baseTime').value;
-      const cycleMinutes = parseInt(document.getElementById('cycleMinutes').value || '0', 10);
-      const cycleSecs = parseInt(document.getElementById('cycleSeconds').value || '0', 10);
-
-      if (!baseTimeInput || isNaN(cycleMinutes) || isNaN(cycleSecs)) {
-        alert('기준 시간과 주기를 올바르게 입력해주세요.');
-        return;
-      }
-
-      cycleSeconds = (cycleMinutes * 60) + cycleSecs;
-
-      if (cycleSeconds <= 0) {
-        alert('신호 주기는 1초 이상이어야 합니다.');
-        return;
-      }
-
-      const today = new Date();
-      const [hours, minutes, seconds] = baseTimeInput.split(':').map(Number);
-
-      baseTime = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        hours,
-        minutes,
-        seconds
-      );
-
-      document.getElementById('setupSection').classList.add('hidden');
-      document.getElementById('timerDisplay').classList.remove('hidden');
-
-      isRunning = true;
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    function stopTimer() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      isRunning = false;
-    }
-
-    function formatRemainTime(totalSeconds) {
-      const safeSeconds = Math.max(0, totalSeconds);
-      const minutes = Math.floor(safeSeconds / 60);
-      const seconds = safeSeconds % 60;
-      return `${minutes}분 ${seconds}초 후`;
-    }
-
     function updateTimer() {
-      if (!baseTime || cycleSeconds <= 0) return;
+      if (!baseTime || CYCLE_SECONDS <= 0) return;
 
       const now = new Date();
 
-      document.getElementById('currentTime').textContent =
-        now.toLocaleTimeString('ko-KR', { hour12: false });
+      document.getElementById('currentTime').textContent = formatClockTime(now);
 
       const adjustedBaseTime = new Date(baseTime.getTime() + offsetSeconds * 1000);
+      const cycleMs = CYCLE_SECONDS * 1000;
 
-      let elapsed = Math.floor((now - adjustedBaseTime) / 1000);
+      const elapsedMs = now.getTime() - adjustedBaseTime.getTime();
+
       let nextCycleIndex;
 
-      if (elapsed < 0) {
+      if (elapsedMs <= 0) {
         nextCycleIndex = 0;
       } else {
-        nextCycleIndex = Math.floor(elapsed / cycleSeconds) + 1;
+        nextCycleIndex = Math.ceil(elapsedMs / cycleMs);
       }
 
       const nextSignalTime = new Date(
-        adjustedBaseTime.getTime() + nextCycleIndex * cycleSeconds * 1000
+        adjustedBaseTime.getTime() + nextCycleIndex * cycleMs
       );
 
       const nextNextSignalTime = new Date(
-        adjustedBaseTime.getTime() + (nextCycleIndex + 1) * cycleSeconds * 1000
+        adjustedBaseTime.getTime() + (nextCycleIndex + 1) * cycleMs
       );
 
-      const timeToNext = Math.ceil((nextSignalTime - now) / 1000);
-      const timeToNextNext = Math.ceil((nextNextSignalTime - now) / 1000);
+      const timeToNext = Math.max(
+        0,
+        Math.floor((nextSignalTime.getTime() - now.getTime()) / 1000)
+      );
+
+      const timeToNextNext = Math.max(
+        0,
+        Math.floor((nextNextSignalTime.getTime() - now.getTime()) / 1000)
+      );
 
       document.getElementById('nextCountdown').textContent =
         formatRemainTime(timeToNext);
@@ -409,10 +376,26 @@
         formatRemainTime(timeToNextNext);
 
       document.getElementById('nextSignal').textContent =
-        nextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
+        formatClockTime(nextSignalTime);
 
       document.getElementById('nextNextSignal').textContent =
-        nextNextSignalTime.toLocaleTimeString('ko-KR', { hour12: false });
+        formatClockTime(nextNextSignalTime);
+    }
+
+    function formatRemainTime(totalSeconds) {
+      const safeSeconds = Math.max(0, totalSeconds);
+      const minutes = Math.floor(safeSeconds / 60);
+      const seconds = safeSeconds % 60;
+
+      return `${minutes}분 ${seconds}초 후`;
+    }
+
+    function formatClockTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${hours}:${minutes}:${seconds}`;
     }
   </script>
 </body>
